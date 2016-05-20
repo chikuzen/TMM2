@@ -57,8 +57,8 @@ and_masks_c(uint8_t* dstp0, uint8_t* dstp1, const uint8_t* srcp0,
 
 static void __stdcall
 combine_masks_c(uint8_t* dstp, const uint8_t* sqp, const uint8_t* shp,
-    const int dpitch, const int spitch, const int width,
-    const int height, const int cstr) noexcept
+                const int dpitch, const int spitch, const int width,
+                const int height, const int cstr) noexcept
 {
     const uint8_t* sqp0 = sqp + spitch;
     const uint8_t* sqp1 = sqp;

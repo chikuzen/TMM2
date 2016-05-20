@@ -33,7 +33,7 @@ static __forceinline int absd(int x, int y) noexcept
 template <int TTYPE>
 static __forceinline int
 get_at4_c(const int c, const int u, const int d, const int l, const int r,
-    const int hs, const int vs) noexcept
+          const int hs, const int vs) noexcept
 {
     int min0 = u, max0 = u;
 
@@ -67,8 +67,8 @@ get_at4_c(const int c, const int u, const int d, const int l, const int r,
 template <int TTYPE>
 static __forceinline int
 get_at8_c(const int c, const int ul, const int u, const int ur, const int l,
-    const int r, const int dl, const int d, const int dr, const int hs,
-    const int vs) noexcept
+          const int r, const int dl, const int d, const int dr, const int hs,
+          const int vs) noexcept
 {
     int min0 = ul, max0 = ul;
     if (max0 < u)  max0 = u;
@@ -115,8 +115,7 @@ get_at8_c(const int c, const int ul, const int u, const int ur, const int l,
 template <int TTYPE>
 static void __stdcall
 proc_c(uint8_t* dqp, const uint8_t* srcp, const int pitch,
-    const int width, const int height, const int hs, const int vs)
-    noexcept
+       const int width, const int height, const int hs, const int vs) noexcept
 {
     uint8_t* dhp = dqp + pitch * height;
 
@@ -234,8 +233,7 @@ get_at_simd(const uint8_t* s0, const uint8_t* s1, const uint8_t* s2,
 template <typename V, int TTYPE, int HS, int VS>
 static void __stdcall
 proc_simd(uint8_t* dqp, const uint8_t* srcp, const int pitch,
-                 const int width, const int height, const int hs, const int vs)
-    noexcept
+          const int width, const int height, const int hs, const int vs) noexcept
 {
     uint8_t* dhp = dqp + pitch * height;
 

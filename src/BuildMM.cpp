@@ -191,14 +191,14 @@ PVideoFrame __stdcall BuildMM::GetFrame(int n, ise_t* env)
             b.tops[i - tstart] = black;
             continue;
         }
-        b.tops[i - tstart] = child->GetFrame(clamp(i, 0, nf), env);
+        b.tops[i - tstart] = child->GetFrame(i, env);
     }
     for (int i = bstop; i >= bstart; --i) {
         if (i < 0 || i >= nfSrc) {
             b.btms[i - bstart] = black;
             continue;
         }
-        b.btms[i - bstart] = btmf->GetFrame(clamp(i, 0, nf), env);
+        b.btms[i - bstart] = btmf->GetFrame(i, env);
     }
     PVideoFrame* oclips = ft == 0 ? b.btms : b.tops;
     PVideoFrame* cclips = ft == 0 ? b.tops : b.btms;
