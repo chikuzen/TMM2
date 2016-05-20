@@ -1,0 +1,17 @@
+TMM/*
+vs2015/.vs/*
+vs2015/Debug/*
+vs2015/Release/*
+vs2015/x64/*
+*.opendb
+*.db
+*.filters
+*.user
+*.sln
+*.sdf
+*.suo
+*.vspx
+*.avs
+*.avsi
+*.dll
+*.exe
