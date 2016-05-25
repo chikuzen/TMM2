@@ -171,8 +171,9 @@ combine_masks_simd(uint8_t* dstp, const uint8_t* sqp, const uint8_t* shp,
 }
 
 
-CreateMM::CreateMM(PClip mm1, PClip mm2, int _cstr, arch_t arch) :
-    GVFmod(mm1, arch), mmask2(mm2), cstr(_cstr), simd(arch != NO_SIMD)
+CreateMM::CreateMM(PClip mm1, PClip mm2, int _cstr, arch_t arch, bool ip) :
+    GVFmod(mm1, arch), mmask2(mm2), cstr(_cstr), simd(arch != NO_SIMD),
+    isPlus(ip)
 {
     vi.height /= 2;
 
@@ -197,21 +198,33 @@ CreateMM::CreateMM(PClip mm1, PClip mm2, int _cstr, arch_t arch) :
 
 
 struct AndBuff {
+    ise_t* env;
+    bool isPlus;
     void* orig;
     uint8_t* am0;
     uint8_t* am1;
     const int pitch;
 
-    AndBuff(int width, int height, size_t align) :
-        pitch((width + 2 + align - 1) & ~(align - 1))
+    AndBuff(int width, int height, size_t align, bool is_plus, ise_t* e) :
+        pitch((width + 2 + align - 1) & ~(align - 1)), env(e), isPlus(is_plus)
     {
-        orig = _mm_malloc(pitch * (height * 2 + 1), align);
+        size_t size = pitch * (height * 2 + 1);
+        if (isPlus) {
+            orig = static_cast<IScriptEnvironment2*>(
+                env)->Allocate(size, align, AVS_POOLED_ALLOC);
+        } else {
+            orig = _mm_malloc(size, align);
+        }
         am0 = reinterpret_cast<uint8_t*>(orig) + pitch;
         am1 = am0 + pitch * height;
     }
     ~AndBuff()
     {
-        _mm_free(orig);
+        if (isPlus) {
+            static_cast<IScriptEnvironment2*>(env)->Free(orig);
+        } else {
+            _mm_free(orig);
+        }
         orig = nullptr;
     }
 };
@@ -224,7 +237,7 @@ PVideoFrame __stdcall CreateMM::GetFrame(int n, ise_t* env)
     auto src0 = child->GetFrame(n, env);
     auto dst = env->NewVideoFrame(vi, align);
 
-    auto buff = AndBuff(vi.width, vi.height, align);
+    auto buff = AndBuff(vi.width, vi.height, align, isPlus, env);
 
     if (!buff.orig) {
         env->ThrowError("TMM: failed to allocate AndBuff.");

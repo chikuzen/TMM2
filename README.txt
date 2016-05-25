@@ -27,7 +27,7 @@ GENERAL INFO:
 
    Syntax=>
 
-	TMM2(clip, int mode, int order, int field, int length, int mtype,
+    TMM2(clip, int mode, int order, int field, int length, int mtype,
            int ttype, int mtqL, int mthL, int mtqC, int mthC, int nt,
            int minthresh, int maxthresh, int cstr, int opt)
 
@@ -173,20 +173,35 @@ PARAMETERS:
 
          Controls which cpu optimizations are used for create motion masks.
 
-		 0 - Use C++ routine.
-		 1 - Use SSE2 routine if possible. When SSE2 can't be used, fallback to 0.
-		 others - Use AVX2 routine if possible. When AVX2 can't be used, fallback to 1.
-		
-		 Default: -1  (int)
+         0 - Use C++ routine.
+         1 - Use SSE2 routine if possible. When SSE2 can't be used, fallback to 0.
+         others - Use AVX2 routine if possible. When AVX2 can't be used, fallback to 1.
+
+         Default: -1  (int)
 
 
+NOTE:
+    - TMM2_avx2.dll is compiled with /arch:AVX2.
+
+    - On Avisynth2.6, AVX2 is always disabled even if you use TMM2_avx2.dll.
+
+    - On Avisynth+ MT, TMM2 is set as MT_NICE_FILTER automatically.
+      You don't have to set SetFilterMTMode() yourself for this filter.
+
+    - This filter requires appropriate memory alignments.
+      Thus, if you want to crop the left side of your source clip before this filter,
+      you have to set crop(align=true).
 
 
 CHANGE LIST:
 
 
-   v0.0 - (2015-05-20)
+   v0.1 - (2016-05-25)
+      + Use buffer pool on avs+ MT.
+      + Disable AVX2 always on Avisynth2.6.
 
+
+   v0.0 - (2016-05-20)
       + initial release
 
 

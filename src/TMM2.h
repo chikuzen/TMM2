@@ -35,6 +35,9 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <avisynth.h>
 
 
+#define TMM2_VERSION "0.1"
+
+
 
 typedef IScriptEnvironment ise_t;
 
@@ -104,6 +107,7 @@ class CreateMM : public GVFmod {
     PClip mmask2;
     const int cstr;
     const bool simd;
+    const bool isPlus;
 
     void(__stdcall *and_masks)(
         uint8_t* dstp0, uint8_t* dstp1, const uint8_t* srcp0,
@@ -117,7 +121,7 @@ class CreateMM : public GVFmod {
         const int cstr);
 
 public:
-    CreateMM(PClip mm1, PClip mm2, int cstr, arch_t arch);
+    CreateMM(PClip mm1, PClip mm2, int cstr, arch_t arch, bool is_avsplus);
     ~CreateMM() {}
     PVideoFrame __stdcall GetFrame(int n, ise_t* env);
 };

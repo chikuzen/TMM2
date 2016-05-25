@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 extern bool has_sse2();
 extern bool has_avx2();
 
-static inline arch_t get_arch(int opt)
+static inline arch_t get_arch(int opt, bool is_avsplus)
 {
     if (opt == 0 || !has_sse2()) {
         return NO_SIMD;
@@ -36,7 +36,7 @@ static inline arch_t get_arch(int opt)
 #if !defined(__AVX2__)
     return USE_SSE2;
 #else
-    if (opt == 1 || !has_avx2()) {
+    if (opt == 1 || !has_avx2() || !is_avsplus) {
         return USE_SSE2;
     }
     return USE_AVX2;
@@ -44,7 +44,7 @@ static inline arch_t get_arch(int opt)
 }
 
 
-static AVSValue __cdecl create_tmm(AVSValue args, void*, ise_t* env)
+static AVSValue __cdecl create_tmm(AVSValue args, void* user_data, ise_t* env)
 {
     try {
         PClip orig = args[0].AsClip();
@@ -93,7 +93,8 @@ static AVSValue __cdecl create_tmm(AVSValue args, void*, ise_t* env)
         int minth = clamp(args[12].AsInt(4), 0, 255);
         int maxth = clamp(args[13].AsInt(75), 0, 255);
         int cstr = clamp(args[14].AsInt(4), 0, 8);
-        arch_t arch = get_arch(args[15].AsInt(-1));
+        bool is_avsplus = user_data != nullptr;
+        arch_t arch = get_arch(args[15].AsInt(-1), is_avsplus);
 
         orig = env->Invoke("SeparateFields", orig).AsClip();
         const char* filter[] = { "SelectEven", "SelectOdd" };
@@ -116,10 +117,10 @@ static AVSValue __cdecl create_tmm(AVSValue args, void*, ise_t* env)
         btmf0 = env->Invoke("InternalCache", btmf0).AsClip();
         PClip btmf1 = new MotionMask(btmf, minth, maxth, nt, 2, arch);
 
-        topf = new CreateMM(topf0, topf1, cstr, arch);
+        topf = new CreateMM(topf0, topf1, cstr, arch, is_avsplus);
         topf = env->Invoke("InternalCache", topf).AsClip();
 
-        btmf = new CreateMM(btmf0, btmf1, cstr, arch);
+        btmf = new CreateMM(btmf0, btmf1, cstr, arch, is_avsplus);
         btmf = env->Invoke("InternalCache", btmf).AsClip();
 
         return new BuildMM(topf, btmf, mode, order, field, length, mtype, arch, env);
@@ -138,6 +139,9 @@ extern "C" __declspec(dllexport) const char* __stdcall
 AvisynthPluginInit3(ise_t* env, const AVS_Linkage* const vectors)
 {
     AVS_linkage = vectors;
+
+    void* is_avsplus = env->FunctionExists("SetFilterMTMode") ? "true" : nullptr;
+
     const char* args =
         "c"             // 0
         "[mode]i"       // 1
@@ -156,12 +160,12 @@ AvisynthPluginInit3(ise_t* env, const AVS_Linkage* const vectors)
         "[cstr]i"       //14
         "[opt]i";       //15
 
-    env->AddFunction("TMM2", args, create_tmm, nullptr);
+    env->AddFunction("TMM2", args, create_tmm, is_avsplus);
 
-    if (env->FunctionExists("SetFilterMTMode")) {
+    if (is_avsplus != nullptr) {
         static_cast<IScriptEnvironment2*>(
             env)->SetFilterMTMode("TMM2", MT_NICE_FILTER, true);
     }
 
-    return "TMM for avs2.6/avs+";
+    return "TMM for avs2.6/avs+ ver. " TMM2_VERSION;
 }

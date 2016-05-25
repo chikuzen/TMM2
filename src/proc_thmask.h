@@ -139,7 +139,7 @@ proc_c(uint8_t* dqp, const uint8_t* srcp, const int pitch,
         }
         s0 = s1;
         s1 = s2;
-        s2 += (y < height - 1) ? pitch : -pitch;
+        s2 += (y < height - 2) ? pitch : -pitch;
         dqp += pitch;
         dhp += pitch;
     }
@@ -257,7 +257,7 @@ proc_simd(uint8_t* dqp, const uint8_t* srcp, const int pitch,
         }
         s0 = s1;
         s1 = s2;
-        s2 += (y < height - 1) ? pitch : -pitch;
+        s2 += (y < height - 2) ? pitch : -pitch;
         dqp += pitch;
         dhp += pitch;
     }

@@ -275,7 +275,7 @@ static F_INLINE V cmpge(const V& x, const V& y)
 template <typename V>
 static F_INLINE V cmpneq(const V& x, const V& y)
 {
-    return or_reg(cmpeq(x, y), cmpeq(x, x));
+    return xor_reg(cmpeq(x, y), cmpeq(x, x));
 }
 
 template <typename V>
