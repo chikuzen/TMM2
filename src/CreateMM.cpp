@@ -171,11 +171,41 @@ combine_masks_simd(uint8_t* dstp, const uint8_t* sqp, const uint8_t* shp,
 }
 
 
+AndBuff::AndBuff(int width, int height, size_t align, bool is_plus, ise_t* e) :
+    pitch((width + 2 + align - 1) & ~(align - 1)), env(e), isPlus(is_plus)
+{
+    size_t size = pitch * (height * 2 + 1);
+    if (isPlus) {
+        orig = static_cast<IScriptEnvironment2*>(
+            env)->Allocate(size, align, AVS_POOLED_ALLOC);
+    } else {
+        orig = _mm_malloc(size, align);
+    }
+    am0 = reinterpret_cast<uint8_t*>(orig) + pitch;
+    am1 = am0 + pitch * height;
+}
+
+AndBuff::~AndBuff()
+{
+    if (isPlus) {
+        static_cast<IScriptEnvironment2*>(env)->Free(orig);
+    } else {
+        _mm_free(orig);
+    }
+    orig = nullptr;
+}
+
+
 CreateMM::CreateMM(PClip mm1, PClip mm2, int _cstr, arch_t arch, bool ip) :
     GVFmod(mm1, arch), mmask2(mm2), cstr(_cstr), simd(arch != NO_SIMD),
-    isPlus(ip)
+    isPlus(ip), abuff(nullptr)
 {
     vi.height /= 2;
+
+    if (!isPlus) {
+        abuff = new AndBuff(vi.width, vi.height, align, false, nullptr);
+        validate(!abuff, "failed to allocate buffer.");
+    }
 
     switch (arch) {
 #if defined(__AVX2__)
@@ -197,37 +227,13 @@ CreateMM::CreateMM(PClip mm1, PClip mm2, int _cstr, arch_t arch, bool ip) :
 }
 
 
-struct AndBuff {
-    ise_t* env;
-    bool isPlus;
-    void* orig;
-    uint8_t* am0;
-    uint8_t* am1;
-    const int pitch;
+CreateMM::~CreateMM()
+{
+    if (!isPlus) {
+        delete abuff;
+    }
+}
 
-    AndBuff(int width, int height, size_t align, bool is_plus, ise_t* e) :
-        pitch((width + 2 + align - 1) & ~(align - 1)), env(e), isPlus(is_plus)
-    {
-        size_t size = pitch * (height * 2 + 1);
-        if (isPlus) {
-            orig = static_cast<IScriptEnvironment2*>(
-                env)->Allocate(size, align, AVS_POOLED_ALLOC);
-        } else {
-            orig = _mm_malloc(size, align);
-        }
-        am0 = reinterpret_cast<uint8_t*>(orig) + pitch;
-        am1 = am0 + pitch * height;
-    }
-    ~AndBuff()
-    {
-        if (isPlus) {
-            static_cast<IScriptEnvironment2*>(env)->Free(orig);
-        } else {
-            _mm_free(orig);
-        }
-        orig = nullptr;
-    }
-};
 
 
 PVideoFrame __stdcall CreateMM::GetFrame(int n, ise_t* env)
@@ -237,11 +243,17 @@ PVideoFrame __stdcall CreateMM::GetFrame(int n, ise_t* env)
     auto src0 = child->GetFrame(n, env);
     auto dst = env->NewVideoFrame(vi, align);
 
-    auto buff = AndBuff(vi.width, vi.height, align, isPlus, env);
-
-    if (!buff.orig) {
-        env->ThrowError("TMM: failed to allocate AndBuff.");
+    uint8_t *am0, *am1;
+    int bpitch;
+    AndBuff* b = abuff;
+    if (isPlus) {
+        b = new AndBuff(vi.width, vi.height, align, true, env);
+        if (!b || !b->orig) {
+            env->ThrowError("TMM: failed to allocate AndBuff.");
+        }
     }
+    am0 = b->am0; am1 = b->am1;
+    bpitch = b->pitch;
 
     for (int p = 0; p < numPlanes; ++p) {
         const int plane = planes[p];
@@ -251,13 +263,17 @@ PVideoFrame __stdcall CreateMM::GetFrame(int n, ise_t* env)
         uint8_t* dstp = dst->GetWritePtr(plane);
         const int dpitch = dst->GetPitch(plane);
 
-        and_masks(buff.am0, buff.am1, src0->GetReadPtr(plane),
+        and_masks(am0, am1, src0->GetReadPtr(plane),
                   src1->GetReadPtr(plane), src2->GetReadPtr(plane),
-                  buff.pitch, src0->GetPitch(plane), src1->GetPitch(plane),
+                  bpitch, src0->GetPitch(plane), src1->GetPitch(plane),
                   src2->GetPitch(plane), width, height);
 
-        combine_masks(dstp, buff.am0, buff.am1, dpitch, buff.pitch, width,
+        combine_masks(dstp, am0, am1, dpitch, bpitch, width,
                       height, cstr);
+    }
+
+    if (isPlus) {
+        delete b;
     }
 
     return dst;

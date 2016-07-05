@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <avisynth.h>
 
 
-#define TMM2_VERSION "0.1"
+#define TMM2_VERSION "0.1.1"
 
 
 
@@ -102,12 +102,23 @@ public:
 };
 
 
+struct AndBuff {
+    ise_t* env;
+    bool isPlus;
+    void* orig;
+    uint8_t* am0;
+    uint8_t* am1;
+    const int pitch;
+    AndBuff(int width, int height, size_t align, bool is_plus, ise_t* e);
+    ~AndBuff();
+};
 
 class CreateMM : public GVFmod {
     PClip mmask2;
     const int cstr;
     const bool simd;
     const bool isPlus;
+    AndBuff* abuff;
 
     void(__stdcall *and_masks)(
         uint8_t* dstp0, uint8_t* dstp1, const uint8_t* srcp0,
@@ -122,7 +133,7 @@ class CreateMM : public GVFmod {
 
 public:
     CreateMM(PClip mm1, PClip mm2, int cstr, arch_t arch, bool is_avsplus);
-    ~CreateMM() {}
+    ~CreateMM();
     PVideoFrame __stdcall GetFrame(int n, ise_t* env);
 };
 

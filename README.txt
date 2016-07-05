@@ -5,7 +5,7 @@
 
 REQUIREMENTS:
 
-      Avisyth2.6.0 / Avisynth+r1579 or later
+      Avisyth2.6.0 / Avisynth+r2005 or later
       Windows Vista sp2 or later
       Microsoft Visual C++ 2015 Redistributable Packages
 
@@ -194,6 +194,10 @@ NOTE:
 
 
 CHANGE LIST:
+
+   v0.1.1 - (2016-07-05)
+      + Update avisynth.h to Avisynth+MT r2005
+      + CreateMM: allocate temporal buffer at constructor unless the enviroment is not avs+MT.
 
 
    v0.1 - (2016-05-25)
