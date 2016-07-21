@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #include <avisynth.h>
 
 
-#define TMM2_VERSION "0.1.1"
+#define TMM2_VERSION "0.1.2"
 
 
 
@@ -59,6 +59,10 @@ public:
         GenericVideoFilter(c), align(a == USE_AVX2 ? 32 : 16)
     {
         numPlanes = vi.IsY8() ? 1 : 3;
+    }
+    int __stdcall SetCacheHints(int cache_hints, int frame_range) override
+    {
+        return cache_hints == CACHE_GET_MTMODE ? MT_NICE_FILTER : 0;
     }
 };
 

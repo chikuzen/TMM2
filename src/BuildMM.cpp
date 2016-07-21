@@ -81,9 +81,6 @@ void BuildMM::setVals()
     int bmax0 = std::max(vals[0].bstop, -vals[0].bstart);
     int tmax1 = std::max(vals[1].tstop, -vals[1].tstart);
     int bmax1 = std::max(vals[0].tstop, -vals[0].tstart);
-
-    child->SetCacheHints(CACHE_WINDOW, std::max(tmax0, tmax1) * 2 + 1);
-    btmf->SetCacheHints(CACHE_WINDOW, std::max(bmax0, bmax1) * 2 + 1);
 }
 
 

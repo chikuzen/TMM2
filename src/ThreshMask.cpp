@@ -90,8 +90,6 @@ ThreshMask(PClip c, int ttype, int mtql, int mthl, int mtqc, int mthc,
         idx += vs[i] == 2 ? 6 : 0;
         proc[i] = functions[idx + ttype];
     }
-
-    child->SetCacheHints(CACHE_NOTHING, 0);
 }
 
 

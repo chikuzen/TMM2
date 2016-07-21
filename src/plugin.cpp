@@ -44,7 +44,7 @@ static inline arch_t get_arch(int opt, bool is_avsplus)
 }
 
 
-static AVSValue __cdecl create_tmm(AVSValue args, void* user_data, ise_t* env)
+static AVSValue __cdecl create_tmm(AVSValue args, void*, ise_t* env)
 {
     try {
         PClip orig = args[0].AsClip();
@@ -93,7 +93,7 @@ static AVSValue __cdecl create_tmm(AVSValue args, void* user_data, ise_t* env)
         int minth = clamp(args[12].AsInt(4), 0, 255);
         int maxth = clamp(args[13].AsInt(75), 0, 255);
         int cstr = clamp(args[14].AsInt(4), 0, 8);
-        bool is_avsplus = user_data != nullptr;
+        bool is_avsplus = env->FunctionExists("SetFilterMTMode");
         arch_t arch = get_arch(args[15].AsInt(-1), is_avsplus);
 
         orig = env->Invoke("SeparateFields", orig).AsClip();
@@ -106,8 +106,6 @@ static AVSValue __cdecl create_tmm(AVSValue args, void* user_data, ise_t* env)
         btmf = new ThreshMask(btmf, ttype, mtql, mthl, mtqc, mthc, arch);
         topf = env->Invoke("InternalCache", topf).AsClip();
         btmf = env->Invoke("InternalCache", btmf).AsClip();
-        topf->SetCacheHints(CACHE_WINDOW, 5);
-        btmf->SetCacheHints(CACHE_WINDOW, 5);
 
         PClip topf0 = new MotionMask(topf, minth, maxth, nt, 1, arch);
         topf0 = env->Invoke("InternalCache", topf0).AsClip();
@@ -126,9 +124,9 @@ static AVSValue __cdecl create_tmm(AVSValue args, void* user_data, ise_t* env)
         return new BuildMM(topf, btmf, mode, order, field, length, mtype, arch, env);
 
     } catch (AvisynthError& e) {
-        env->ThrowError((std::string("TMM2: ") + e.msg).c_str());
+        env->ThrowError("TMM2: %s", e.msg);
     } catch (std::runtime_error& e) {
-        env->ThrowError((std::string("TMM2: ") + e.what()).c_str());
+        env->ThrowError("TMM2: %s", e.what());
     }
     return 0;
 }
@@ -139,8 +137,6 @@ extern "C" __declspec(dllexport) const char* __stdcall
 AvisynthPluginInit3(ise_t* env, const AVS_Linkage* const vectors)
 {
     AVS_linkage = vectors;
-
-    void* is_avsplus = env->FunctionExists("SetFilterMTMode") ? "true" : nullptr;
 
     const char* args =
         "c"             // 0
@@ -160,12 +156,7 @@ AvisynthPluginInit3(ise_t* env, const AVS_Linkage* const vectors)
         "[cstr]i"       //14
         "[opt]i";       //15
 
-    env->AddFunction("TMM2", args, create_tmm, is_avsplus);
-
-    if (is_avsplus != nullptr) {
-        static_cast<IScriptEnvironment2*>(
-            env)->SetFilterMTMode("TMM2", MT_NICE_FILTER, true);
-    }
+    env->AddFunction("TMM2", args, create_tmm, nullptr);
 
     return "TMM for avs2.6/avs+ ver. " TMM2_VERSION;
 }

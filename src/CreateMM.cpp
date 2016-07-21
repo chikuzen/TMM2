@@ -222,8 +222,6 @@ CreateMM::CreateMM(PClip mm1, PClip mm2, int _cstr, arch_t arch, bool ip) :
         and_masks = and_masks_c;
         combine_masks = combine_masks_c;
     }
-
-    child->SetCacheHints(CACHE_WINDOW, 3);
 }
 
 
