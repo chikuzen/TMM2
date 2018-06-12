@@ -39,7 +39,7 @@ GENERAL INFO:
 
 
         mpeg2source()  // assume bff source, keep top field, same rate
-        tdeint(order=0,field=1,emask=TMM(order=0,field=1)
+        tdeint(order=0,field=1,emask=TMM(order=0,field=1))
 
 
 
